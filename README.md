@@ -1,6 +1,9 @@
 # Lab 1 - Deep Learning (PyTorch) : Regression & Multi class Classification
 
 **Université Abdelmalek Essaadi - FST Tanger - Master MBD**
+
+Realized by : **Mounim Nadir**
+
 Supervised by : Pr. ELAACHAK Lotfi
 
 ## Objective
@@ -31,6 +34,53 @@ The notebooks download the datasets automatically with `kagglehub`, so they can 
 - **Curves** : Loss / Epochs and Accuracy / Epochs for train and test.
 - **Metrics** : accuracy, precision, sensitivity (recall), specificity, F1 (macro and weighted), confusion matrix, on train and test.
 - **Regularization** : Dropout, L2, L1, BatchNorm, all together, compared to the base model.
+
+## Results
+
+### Part 1 : Regression (NYSE)
+Best hyper-parameters (GridSearch, CV R² = 0.9998) : Adam, lr = 0.001, 40 epochs, 2 hidden layers of 32 neurons.
+
+Test set (prices in $) :
+
+| model | MSE | MAE | R² |
+|-------|-----|-----|----|
+| **base** | **0.66** | **0.47** | **0.9999** |
+| dropout (0.2) | 106.34 | 3.14 | 0.9799 |
+| L2 (1e-3) | 1.30 | 0.58 | 0.9998 |
+| L1 (1e-5) | 0.96 | 0.55 | 0.9998 |
+| batchnorm | 18.62 | 3.19 | 0.9965 |
+| all together | 69.11 | 6.93 | 0.9869 |
+
+Train and test curves are almost the same, so the base model is not overfitting and regularization does not improve it.
+
+### Part 2 : Multi class classification (Predictive Maintenance)
+Best hyper-parameters (GridSearch, CV macro F1 = 0.989) : Adam, lr = 0.01, 40 epochs, 2 hidden layers of 64 neurons.
+
+Base model on train and test :
+
+| data | accuracy | precision (macro) | recall (macro) | F1 (macro) | F1 (weighted) |
+|------|----------|-------------------|----------------|------------|---------------|
+| train (balanced) | 0.994 | 0.994 | 0.994 | 0.994 | 0.994 |
+| train (original) | 0.981 | 0.732 | 0.978 | 0.811 | 0.984 |
+| test | 0.962 | 0.574 | 0.783 | 0.645 | 0.969 |
+
+Regularization comparison (test set) :
+
+| model | accuracy | precision (macro) | recall (macro) | F1 (macro) |
+|-------|----------|-------------------|----------------|------------|
+| base | 0.962 | 0.574 | 0.783 | 0.645 |
+| dropout (0.3) | 0.925 | 0.511 | 0.897 | 0.609 |
+| L2 (1e-3) | 0.927 | 0.513 | 0.887 | 0.605 |
+| **L1 (1e-5)** | **0.969** | **0.616** | 0.807 | **0.688** |
+| batchnorm | 0.960 | 0.586 | 0.811 | 0.660 |
+| all together | 0.871 | 0.445 | **0.951** | 0.540 |
+
+The hardest class is **Tool Wear Failure** (only 9 samples in the test set, recall 0.44).
+
+## Limitations
+- **Part 1** : `open`, `high` and `low` of the same day are only known at the end of the day, and they are almost equal to `close`, so the task is easy (R² ≈ 1). The random split also mixes days from the same stock in train and test. A real forecasting task would predict the next day's close with a split by date.
+- **Part 2** : the GridSearch cross-validation was done on the SMOTE data, so synthetic samples from one fold are close to samples of the other folds. This is why the CV macro F1 (0.989) is much higher than the test macro F1 (0.645). A better way is to put SMOTE inside an `imblearn` `Pipeline` so it is applied only on the training folds.
+- The regularization models are compared on the test set, a separate validation set would be cleaner.
 
 ## Synthesis (what I learned)
 - How to build a neural network in PyTorch with `nn.Module`, write the training loop (forward, loss, backward, optimizer step) and evaluate it.
